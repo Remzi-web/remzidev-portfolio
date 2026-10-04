@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remzi Dev | Modern Web & 3D Portfolio</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #08080c;
+            color: #ffffff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 0, 60, 0.2);
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .logo span { color: #ff003c; }
+
+        .lang-menu-wrapper { position: relative; }
+
+        .lang-toggle-btn {
+            background: rgba(255, 0, 60, 0.15);
+            border: 1px solid #ff003c;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+
+        .lang-toggle-btn:hover { background: #ff003c; }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: #0f0f15;
+            border: 1px solid rgba(255, 0, 60, 0.3);
+            border-radius: 12px;
+            display: none;
+            flex-direction: column;
+            width: 140px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            z-index: 1001;
+        }
+
+        .lang-dropdown.show { display: flex; }
+
+        .lang-dropdown button {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            padding: 10px 15px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+
+        .lang-dropdown button:hover, .lang-dropdown button.active {
+            background: #ff003c;
+            color: #fff;
+        }
+
+        .hero {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px 8%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero-sub {
+            font-size: 1.1rem;
+            color: #ff003c;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .hero-title {
+            font-size: clamp(2.2rem, 5vw, 3.8rem);
+            line-height: 1.2;
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        .hero-title span { color: #ff003c; }
+
+        .hero-desc {
+            font-size: 1.05rem;
+            color: #aaa;
+            max-width: 700px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .social-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .social-btn {
+            padding: 10px 18px;
+            border-radius: 25px;
+            text-decoration: none;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .social-btn:hover {
+            border-color: #ff003c;
+            background: rgba(255, 0, 60, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .projects-section {
+            padding: 60px 8%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            color: #fff;
+            border-left: 4px solid #ff003c;
+            padding-left: 15px;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .project-card {
+            background: rgba(15, 15, 22, 0.8);
+            border: 1px solid rgba(255, 0, 60, 0.2);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-6px);
+            border-color: #ff003c;
+            box-shadow: 0 10px 30px rgba(255, 0, 60, 0.2);
+        }
+
+        .project-img {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+        }
+
+        .project-info { padding: 20px; }
+
+        .project-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .project-desc {
+            color: #999;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* AI Chatbot Widget */
+        #ai-widget-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background: #ff003c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.6);
+            cursor: pointer;
+            z-index: 2000;
+            transition: 0.3s;
+        }
+
+        #ai-widget-btn:hover { transform: scale(1.1); }
+
+        #ai-chat-box {
+            position: fixed;
+            bottom: 95px;
+            right: 25px;
+            width: 350px;
+            max-width: 90vw;
+            height: 450px;
+            background: rgba(12, 12, 18, 0.96);
+            border: 1px solid #ff003c;
+            border-radius: 16px;
+            display: none;
+            flex-direction: column;
+            z-index: 2000;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: #ff003c;
+            padding: 14px 18px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            line-height: 1.4;
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+
+        .ai-msg {
+            background: rgba(255, 255, 255, 0.08);
+            align-self: flex-start;
+            border-left: 3px solid #ff003c;
+            color: #eee;
+        }
+
+        .user-msg {
+            background: #ff003c;
+            color: #fff;
+            align-self: flex-end;
+        }
+
+        .chat-footer {
+            display: flex;
+            padding: 10px;
+            background: rgba(5, 5, 8, 0.9);
+            border-top: 1px solid rgba(255, 0, 60, 0.2);
+        }
+
+        .chat-footer form {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+        }
+
+        #aiInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            outline: none;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+
+        #aiSend {
+            background: #ff003c;
+            border: none;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #aiSend:hover { background: #d00030; }
+
+        .clear-btn {
+            background: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        .clear-btn:hover { opacity: 1; }
+
+        @media (max-width: 768px) {
+            header { padding: 12px 4%; }
+            .hero { padding: 30px 5%; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <header>
+        <a href="#" class="logo">Remzi<span>Dev</span></a>
+        
+        <div class="lang-menu-wrapper">
+            <button class="lang-toggle-btn" id="langBtn" onclick="toggleLangMenu()">
+                <i class="fas fa-globe"></i> <span id="currentLangLabel">Türkçe</span> <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="lang-dropdown" id="langDropdown">
+                <button onclick="setLanguage('tr')" class="active">Türkçe</button>
+                <button onclick="setLanguage('uz')">O'zbekcha</button>
+                <button onclick="setLanguage('en')">English</button>
+                <button onclick="setLanguage('tk')">Türkmençe</button>
+                <button onclick="setLanguage('ru')">Русский</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-sub" id="heroSub"><i class="fas fa-code"></i> Merhaba, Ben Hursant (Remzi Dev)</div>
+        <h1 class="hero-title" id="heroTitle">Geleceğin Dijital Web Deneyimlerini <span>Kodluyorum</span></h1>
+        <p class="hero-desc" id="heroDesc">
+            Junior Web Developer olarak HTML5, CSS3, JavaScript (ES6+), Three.js ve Python teknolojileriyle markanız için yüksek hızlı, 3D etkileşimli ve ultra-modern web siteleri geliştiriyorum.
+        </p>
+
+        <!-- SIZNING RAQAMINGIZ HILDY / ORQAGA ULANGAN, LEKIN EKRANDA MATN BO'LIB KO'RINMAYDI -->
+        <div class="social-grid">
+            <a href="https://wa.me/905387487740" target="_blank" class="social-btn"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            <a href="https://t.me/+905387487740" target="_blank" class="social-btn"><i class="fab fa-telegram-plane"></i> Telegram</a>
+            <a href="https://instagram.com" target="_blank" class="social-btn"><i class="fab fa-instagram"></i> Instagram</a>
+            <a href="https://facebook.com" target="_blank" class="social-btn"><i class="fab fa-facebook-f"></i> Facebook</a>
+        </div>
+    </section>
+
+    <section class="projects-section">
+        <h2 class="section-title" id="projectsTitle">Seçkin Projelerim</h2>
+        <div class="projects-grid">
+            <div class="project-card">
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80" class="project-img" alt="Restoran">
+                <div class="project-info">
+                    <h3 class="project-title" id="p1Title">Modern Restoran & Kafe Web Sitesi</h3>
+                    <p class="project-desc" id="p1Desc">Türkiye'deki lüks restoranlar için online rezervasyon ve dijital menü sistemli modern web sitesi.</p>
+                </div>
+            </div>
+            <div class="project-card">
+                <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80" class="project-img" alt="Moda">
+                <div class="project-info">
+                    <h3 class="project-title" id="p2Title">Moda & Giyim Mağazası</h3>
+                    <p class="project-desc" id="p2Desc">Hızlı, mobil uyumlu ve yüksek dönüşüm odaklı e-ticaret arayüz tasarımı.</p>
+                </div>
+            </div>
+            <div class="project-card">
+                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80" class="project-img" alt="3D">
+                <div class="project-info">
+                    <h3 class="project-title" id="p3Title">3D Interaktif Web Platformu</h3>
+                    <p class="project-desc" id="p3Desc">Three.js ve WebGL ile hazırlanmış 360-derece animasyonlu ultra modern web deneyimi.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Chatbot Widget -->
+    <div id="ai-widget-btn" onclick="toggleChat()"><i class="fas fa-robot"></i></div>
+    <div id="ai-chat-box">
+        <div class="chat-header">
+            <span><i class="fas fa-brain"></i> Remzi AI Asistan</span>
+            <div>
+                <button class="clear-btn" onclick="clearChatHistory()" title="Chatni tozalash"><i class="fas fa-trash"></i></button>
+                <i class="fas fa-times" onclick="toggleChat()" style="cursor:pointer; margin-left: 10px;"></i>
+            </div>
+        </div>
+        <div class="chat-body" id="chatBody">
+            <div class="msg ai-msg" id="aiWelcome">
+                Merhaba! Ben Remzi Dev AI asistanıyım. Web tasarımı, 3D animasyonlar ve özel projeler hakkında sorularınızı yanıtlayabilirim!
+            </div>
+        </div>
+        <div class="chat-footer">
+            <form onsubmit="sendMessage(event)">
+                <input type="text" id="aiInput" placeholder="Mesajınızı yazın..." autocomplete="off">
+                <button type="submit" id="aiSend"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let defaultWelcomeMsg = "Merhaba! Ben Remzi Dev AI asistanıyım. Web tasarımı, 3D animasyonlar ve özel projeler hakkında sorularınızı yanıtlayabilirim!";
+
+        // CHATNI TOZALASH FUNKSIYASI
+        function clearChatHistory() {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.innerHTML = `<div class="msg ai-msg" id="aiWelcome">${defaultWelcomeMsg}</div>`;
+        }
+
+        // XABAR YUBORISH VA AVTOMATIK YOZUVNI YO'QOTISH
+        function sendMessage(e) {
+            if (e) e.preventDefault();
+
+            const input = document.getElementById('aiInput');
+            const chatBody = document.getElementById('chatBody');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            // Foydalanuvchi yozuvi chiqariladi
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg user-msg';
+            userDiv.innerText = text;
+            chatBody.appendChild(userDiv);
+
+            // INPUT MATNI DARHOL TOZALANADI
+            input.value = '';
+
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // AI Javob beradi (Hech qanday ko'rinadigan raqamsiz)
+            setTimeout(() => {
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'msg ai-msg';
+                aiDiv.innerText = getAIResponse(text);
+                chatBody.appendChild(aiDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }, 300);
+        }
+
+        function getAIResponse(query) {
+            const q = query.toLowerCase();
+
+            if (q.includes('salom') || q.includes('merhaba') || q.includes('hello') || q.includes('privet')) {
+                return "Va alaykum salom! Remzi Dev veb-studiyasiga xush kelibsiz. Qanday veb-sayt yaratishimizni xohlaysiz?";
+            }
+            if (q.includes('nima') || q.includes('xizmat') || q.includes('ne yapıyorsunuz')) {
+                return "Biz Restoran/Kafe saytlari, Onlayn do'konlar (E-commerce), 3D interaktiv portfoliolar va zamonaviy web-ilovalar yaratamiz!";
+            }
+            if (q.includes('dizayn') || q.includes('design')) {
+                return "Biz Cyberpunk Neon, Glassmorphism va Three.js 3D interaktiv dizaynlarni tayyorlay olamiz.";
+            }
+
+            return "Tushundim! Sizga mukammal veb-sayt yaratish bo'yicha batafsil ma'lumot berishim mumkin. Saytdagi WhatsApp tugmasi orqali to'g'ridan-to'g'ri yozishingiz mumkin!";
+        }
+
+        function toggleChat() {
+            const chatBox = document.getElementById('ai-chat-box');
+            if (chatBox.style.display === 'flex') {
+                chatBox.style.display = 'none';
+            } else {
+                chatBox.style.display = 'flex';
+                clearChatHistory(); // Chat har safar ochilganda ham eski suhbatlar avtomatik tozalanadi
+            }
+        }
+
+        // TILLAR MENYUSI (5 TA TIL)
+        const translations = {
+            tr: {
+                label: 'Türkçe',
+                heroSub: '<i class="fas fa-code"></i> Merhaba, Ben Hursant (Remzi Dev)',
+                heroTitle: 'Geleceğin Dijital Web Deneyimlerini <span>Kodluyorum</span>',
+                heroDesc: 'Junior Web Developer olarak HTML5, CSS3, JavaScript (ES6+), Three.js ve Python teknolojileriyle markanız için yüksek hızlı, 3D etkileşimli ve ultra-modern web siteleri geliştiriyorum.',
+                projectsTitle: 'Seçkin Projelerim',
+                p1Title: 'Modern Restoran & Kafe Web Sitesi',
+                p1Desc: 'Türkiye\'deki lüks restoranlar için online rezervasyon ve dijital menü sistemli modern web sitesi.',
+                p2Title: 'Moda & Giyim Mağazası',
+                p2Desc: 'Hızlı, mobil uyumlu ve yüksek dönüşüm odaklı e-ticaret arayüz tasarımı.',
+                p3Title: '3D Interaktif Web Platformu',
+                p3Desc: 'Three.js ve WebGL ile hazırlanmış 360-derece animasyonlu ultra modern web deneyimi.',
+                aiWelcome: 'Merhaba! Ben Remzi Dev AI asistanıyım. Web tasarımı, 3D animasyonlar ve özel projeler hakkında sorularınızı yanıtlayabilirim!'
+            },
+            uz: {
+                label: 'O\'zbekcha',
+                heroSub: '<i class="fas fa-code"></i> Salom, Men Hursant (Remzi Dev)',
+                heroTitle: 'Kelajakning Raqamli Veb Tajribalarini <span>Dasturlayman</span>',
+                heroDesc: 'Junior Web Developer sifatida HTML5, CSS3, JavaScript (ES6+), Three.js va Python texnologiyalari orqali brendingiz uchun yuqori tezlikdagi, 3D interaktiv zamonaviy veb-saytlar yarataman.',
+                projectsTitle: 'Tanlangan Loyihalarim',
+                p1Title: 'Zamonaviy Restoran va Kafe Sayti',
+                p1Desc: 'Turkiyadagi restoranlar uchun onlayn bron va raqamli menyu tizimiga ega veb-sayt.',
+                p2Title: 'Kiyim va Moda Do\'koni',
+                p2Desc: 'Tezkor, mobil moslashuvchan va xaridga yo\'naltirilgan elektron tijorat sayti.',
+                p3Title: '3D Interaktiv Veb Platforma',
+                p3Desc: 'Three.js va WebGL yordamida yaratilgan 360 darajali animatsiyali zamonaviy sayt.',
+                aiWelcome: 'Salom! Men Remzi Dev AI yordamchisiman. Veb-sayt yaratish va dizaynlar bo\'yicha savollaringizga javob beraman!'
+            },
+            en: {
+                label: 'English',
+                heroSub: '<i class="fas fa-code"></i> Hello, I am Hursant (Remzi Dev)',
+                heroTitle: 'Coding Future Digital Web <span>Experiences</span>',
+                heroDesc: 'As a Junior Web Developer, I build high-speed, 3D interactive, and ultra-modern websites using HTML5, CSS3, JavaScript, Three.js, and Python.',
+                projectsTitle: 'Featured Projects',
+                p1Title: 'Modern Restaurant & Cafe Website',
+                p1Desc: 'Modern website with online reservation and digital menu system for luxury restaurants.',
+                p2Title: 'Fashion & Clothing Store',
+                p2Desc: 'Fast, responsive, and high-conversion e-commerce interface design.',
+                p3Title: '3D Interactive Web Platform',
+                p3Desc: '360-degree animated web experience built with Three.js and WebGL.',
+                aiWelcome: 'Hello! I am Remzi Dev AI assistant. Ask me anything about web development or 3D animations!'
+            },
+            tk: {
+                label: 'Türkmençe',
+                heroSub: '<i class="fas fa-code"></i> Salam, Men Hursant (Remzi Dev)',
+                heroTitle: 'Geljegiň Sanly Web Tejribelerini <span>Düzýärin</span>',
+                heroDesc: 'Junior Web Developer hökmünde HTML5, CSS3, JavaScript, Three.js bilen çalt we 3D modern web sahypalaryny taýýarlaýaryn.',
+                projectsTitle: 'Saýlanan Taslamalar',
+                p1Title: 'Modern Restoran we Kafe Sahypasy',
+                p1Desc: 'Onlaýn bron we sanly menýu ulgamly restoran web sahypasy.',
+                p2Title: 'Eşik we Moda Dükanı',
+                p2Desc: 'Tiz we mobil üçin amatly e-söwda dizaýny.',
+                p3Title: '3D Interaktiw Web Platformasy',
+                p3Desc: 'Three.js we WebGL bilen taýýarlanan 360-dereje animasiýaly sahypa.',
+                aiWelcome: 'Salam! Men Remzi Dev AI kömekçisi. Web dizaýn barada sorag berip bilersiňiz!'
+            },
+            ru: {
+                label: 'Русский',
+                heroSub: '<i class="fas fa-code"></i> Здравствуйте, я Хурсант (Remzi Dev)',
+                heroTitle: 'Создаю цифровые веб-решения <span>будущего</span>',
+                heroDesc: 'Как Junior Web Developer, я разрабатываю высокоскоростные, 3D-интерактивные и ультрасовременные веб-сайты с использованием HTML5, CSS3, JavaScript, Three.js и Python.',
+                projectsTitle: 'Избранные Проекты',
+                p1Title: 'Сайт для Ресторана и Кафе',
+                p1Desc: 'Современный сайт с системой онлайн-бронирования и цифрового меню.',
+                p2Title: 'Магазин Одежды и Моды',
+                p2Desc: 'Быстрый, адаптивный дизайн интерфейса для интернет-магазина.',
+                p3Title: '3D Интерактивная Платформа',
+                p3Desc: '360-градусный интерактивный веб-интерфейс на Three.js и WebGL.',
+                aiWelcome: 'Здравствуйте! Я AI-ассистент Remzi Dev. Задайте мне вопрос о веб-разработке и дизайне!'
+            }
+        };
+
+        function toggleLangMenu() {
+            document.getElementById('langDropdown').classList.toggle('show');
+        }
+
+        function setLanguage(lang) {
+            const data = translations[lang] || translations['tr'];
+            defaultWelcomeMsg = data.aiWelcome;
+            document.getElementById('currentLangLabel').innerText = data.label;
+            document.getElementById('heroSub').innerHTML = data.heroSub;
+            document.getElementById('heroTitle').innerHTML = data.heroTitle;
+            document.getElementById('heroDesc').innerHTML = data.heroDesc;
+            document.getElementById('projectsTitle').innerText = data.projectsTitle;
+            document.getElementById('p1Title').innerText = data.p1Title;
+            document.getElementById('p1Desc').innerText = data.p1Desc;
+            document.getElementById('p2Title').innerText = data.p2Title;
+            document.getElementById('p2Desc').innerText = data.p2Desc;
+            document.getElementById('p3Title').innerText = data.p3Title;
+            document.getElementById('p3Desc').innerText = data.p3Desc;
+            
+            clearChatHistory();
+
+            document.querySelectorAll('.lang-dropdown button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('langDropdown').classList.remove('show');
+        }
+
+        // 3D KOINOT ANIMATSIYASI
+        const canvas = document.getElementById('bg-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const count = 700;
+        const positions = new Float32Array(count * 3);
+
+        for (let i = 0; i < count * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 12;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.025,
+            color: 0xff003c,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+        camera.position.z = 3.5;
+
+        let mouseX = 0;
+        let mouseY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 0.8;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 0.8;
+        });
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+
+            particles.rotation.y += 0.001;
+            particles.rotation.x += 0.0005;
+
+            particles.rotation.y += (mouseX - particles.rotation.y) * 0.05;
+            particles.rotation.x += (-mouseY - particles.rotation.x) * 0.05;
+
+            renderer.render(scene, camera);
+        }
+        animate3D();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
